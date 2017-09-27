@@ -34,7 +34,20 @@ class RxPreferences(context: Context,
      */
     @Suppress("UNCHECKED_CAST")
     operator fun <T : Any> get(key: String, defValue: T): Observable<T> =
-            Observable.fromCallable { prefs[key, defValue] }.subscribeOn(scheduler)
+            Observable.fromCallable {
+                when (defValue) {
+                    is Boolean -> prefs.getBoolean(key, defValue) as T
+                    is Float -> prefs.getFloat(key, defValue) as T
+                    is Int -> prefs.getInt(key, defValue) as T
+                    is Long -> prefs.getLong(key, defValue) as T
+                    is String -> prefs.getString(key, defValue) as T
+                    is Set<*> -> {
+                        if (defValue.any { it !is String }) throw UnsupportedOperationException("Only Set<String> is supported")
+                        prefs.getStringSet(key, defValue as Set<String>) as T
+                    }
+                    else -> throw UnsupportedOperationException("no accessor found for type ${defValue::class.java}")
+                }
+            }.subscribeOn(scheduler)
                     .concatWith(changeObservable.subscribeOn(scheduler)
                             .filter { it.first == key }
                             .map { it.second }
@@ -71,21 +84,6 @@ class RxPreferences(context: Context,
             if (!editor.commit()) throw IOException("failed to write preferences")
         }.subscribeOn(scheduler)
     }
-
-    @Suppress("UNCHECKED_CAST")
-    private operator fun <T : Any> SharedPreferences.get(key: String, defValue: T): T =
-            when (defValue) {
-                is Boolean -> getBoolean(key, defValue) as T
-                is Float -> getFloat(key, defValue) as T
-                is Int -> getInt(key, defValue) as T
-                is Long -> getLong(key, defValue) as T
-                is String -> getString(key, defValue) as T
-                is Set<*> -> {
-                    if (defValue.any { it !is String }) throw UnsupportedOperationException("Only Set<String> is supported")
-                    getStringSet(key, defValue as Set<String>) as T
-                }
-                else -> throw UnsupportedOperationException("no accessor found for type ${defValue::class.java}")
-            }
 
     class Editor(prefs: SharedPreferences)
         : SharedPreferences.Editor by prefs.edit() {
