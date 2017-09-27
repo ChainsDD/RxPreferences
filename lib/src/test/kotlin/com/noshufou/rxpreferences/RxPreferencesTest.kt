@@ -28,10 +28,10 @@ class RxPreferencesTest {
         val testObserver: TestObserver<Int> = rxPrefs["int", 0].test()
         testObserver.assertValue(0)
 
-        rxPrefs.commit {
+        rxPrefs.edit {
             "int" to 1
             "str" to "bar"
-        }.test()
+        }
 
         testObserver.assertValues(0, 1)
         testObserver.dispose()
@@ -46,10 +46,10 @@ class RxPreferencesTest {
         strObserver.assertValue("foo")
         intObserver.assertValue(0)
 
-        rxPrefs.commit {
+        rxPrefs.edit {
             "int" to 1
             "str" to "bar"
-        }.test()
+        }
 
         strObserver.assertValues("foo", "bar")
         intObserver.assertValues(0, 1)
@@ -57,21 +57,20 @@ class RxPreferencesTest {
     }
 
     @Test fun wrongType() {
-        rxPrefs.commit { "int" to 1 }.test()
+        rxPrefs.edit { "int" to 1 }
         val strObserver = rxPrefs["int", ""].test()
         strObserver.assertError(ClassCastException::class.java)
     }
 
     @Test fun stringSet() {
-        rxPrefs.commit { "strs" to setOf("foo", "bar") }.test()
+        rxPrefs.edit { "strs" to setOf("foo", "bar") }
         val setObserver = rxPrefs["strs", emptySet<String>()].test()
         setObserver.assertValue(setOf("foo", "bar"))
         setObserver.dispose()
     }
 
-    @Test fun setNotStrings() {
-        val shouldFail = rxPrefs.commit { "ints" to setOf(0, 1) }.test()
-        shouldFail.assertError(UnsupportedOperationException::class.java)
+    @Test(expected = UnsupportedOperationException::class) fun setNotStrings() {
+        rxPrefs.edit { "ints" to setOf(0, 1) }
     }
 
     @Test fun put() {

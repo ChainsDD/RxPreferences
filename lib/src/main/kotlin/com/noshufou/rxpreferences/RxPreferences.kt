@@ -2,12 +2,10 @@ package com.noshufou.rxpreferences
 
 import android.content.Context
 import android.content.SharedPreferences
-import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Scheduler
 import io.reactivex.functions.Consumer
 import io.reactivex.schedulers.Schedulers
-import java.io.IOException
 
 /**
  * Base class for shared preferences
@@ -73,16 +71,20 @@ class RxPreferences(context: Context,
         }
     }
 
-    fun commit(func: Editor.() -> Unit): Completable {
-        val editor = Editor(prefs)
-        try {
-            editor.func()
-        } catch (e: Throwable) {
-            return Completable.error(e)
+    /**
+     * Edit the attached SharedPreferences asynchronously
+     *
+     * Similar to SharedPreferences.Editor, no checks are made regarding the type of existing keys.
+     * If you assign a key to a different type, it is simply overwritten.
+     *
+     * @param func lambda with a receiver of the Editor type
+     * @throws UnsupportedOperationException if a Set<> is used that contains anything other than Strings
+     */
+    fun edit(func: Editor.() -> Unit) {
+        Editor(prefs).apply {
+            func()
+            apply()
         }
-        return Completable.fromAction {
-            if (!editor.commit()) throw IOException("failed to write preferences")
-        }.subscribeOn(scheduler)
     }
 
     class Editor(prefs: SharedPreferences)
