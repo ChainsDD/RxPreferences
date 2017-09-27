@@ -64,7 +64,7 @@ class RxPreferences(context: Context,
      */
     operator fun <T : Any> get(key: String): Consumer<T> {
         return Consumer {
-            Editor(prefs).apply {
+            EditorImpl(prefs).apply {
                 key to it
                 apply()
             }
@@ -81,16 +81,30 @@ class RxPreferences(context: Context,
      * @throws UnsupportedOperationException if a Set<> is used that contains anything other than Strings
      */
     fun edit(func: Editor.() -> Unit) {
-        Editor(prefs).apply {
+        EditorImpl(prefs).apply {
             func()
             apply()
         }
     }
 
-    class Editor(prefs: SharedPreferences)
-        : SharedPreferences.Editor by prefs.edit() {
+    /**
+     * SharedPreferences.Editor
+     */
+    interface Editor : SharedPreferences.Editor {
+        /**
+         * assign a value to a given key
+         *
+         * @receiver the key of the preference you want to assign
+         * @param value value to be assigned to the key, must be Boolean, Float, Int, Long, String, or Set<String>
+         * @throws UnsupportedOperationException if a Set<> is used that contains anything other than Strings
+         */
+        infix fun String.to(value: Any)
+    }
 
-        infix fun String.to(value: Any) {
+    private class EditorImpl(prefs: SharedPreferences)
+        : Editor, SharedPreferences.Editor by prefs.edit() {
+
+        override infix fun String.to(value: Any) {
             when (value) {
                 is Boolean -> putBoolean(this, value)
                 is Float -> putFloat(this, value)
