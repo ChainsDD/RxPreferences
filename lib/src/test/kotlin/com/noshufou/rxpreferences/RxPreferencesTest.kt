@@ -28,10 +28,10 @@ class RxPreferencesTest {
         val testObserver: TestObserver<Int> = rxPrefs["int", 0].test()
         testObserver.assertValue(0)
 
-        rxPrefs.apply {
+        rxPrefs.commit {
             "int" to 1
             "str" to "bar"
-        }
+        }.test()
 
         testObserver.assertValues(0, 1)
         testObserver.dispose()
@@ -46,10 +46,10 @@ class RxPreferencesTest {
         strObserver.assertValue("foo")
         intObserver.assertValue(0)
 
-        rxPrefs.apply {
+        rxPrefs.commit {
             "int" to 1
             "str" to "bar"
-        }
+        }.test()
 
         strObserver.assertValues("foo", "bar")
         intObserver.assertValues(0, 1)
@@ -57,13 +57,13 @@ class RxPreferencesTest {
     }
 
     @Test fun wrongType() {
-        rxPrefs.apply { "int" to 1 }
+        rxPrefs.commit { "int" to 1 }.test()
         val strObserver = rxPrefs["int", ""].test()
         strObserver.assertError(ClassCastException::class.java)
     }
 
     @Test fun stringSet() {
-        rxPrefs.apply { "strs" to setOf("foo", "bar") }
+        rxPrefs.commit { "strs" to setOf("foo", "bar") }.test()
         val setObserver = rxPrefs["strs", emptySet<String>()].test()
         setObserver.assertValue(setOf("foo", "bar"))
         setObserver.dispose()
@@ -76,7 +76,7 @@ class RxPreferencesTest {
 
     @Test fun put() {
         val intObserver = rxPrefs["int", 0].test()
-        Observable.just(1, 2, 3).subscribe(rxPrefs.put("int"))
+        Observable.just(1, 2, 3).subscribe(rxPrefs["int"])
         intObserver.assertValues(0, 1, 2, 3)
     }
 }

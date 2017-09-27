@@ -40,10 +40,23 @@ class RxPreferences(context: Context,
                             .map { it.second }
                             .map { it as T })
 
-    fun apply(func: Editor.() -> Unit) {
-        Editor(prefs).apply {
-            func()
-            apply()
+    /**
+     * Obtain a Consumer for the given key
+     *
+     * This consumer does not check for the type of SharedPreference it is writing to. If you
+     * supply a key that was originally a different type, it will be overwritten with a new key
+     * of the given type. This is inline with how SharedPreferences works.
+     *
+     * @param T type of the Consumer, must be Boolean, Float, Int, Long, String or Set<String>
+     * @param key key for the SharedPreference you want to update
+     * @return a Consumer<T> that persists each value asynchronously
+     */
+    operator fun <T : Any> get(key: String): Consumer<T> {
+        return Consumer {
+            Editor(prefs).apply {
+                key to it
+                apply()
+            }
         }
     }
 
@@ -57,15 +70,6 @@ class RxPreferences(context: Context,
         return Completable.fromAction {
             if (!editor.commit()) throw IOException("failed to write preferences")
         }.subscribeOn(scheduler)
-    }
-
-    fun <T : Any> put(key: String): Consumer<T> {
-        return Consumer {
-            Editor(prefs).apply {
-                key to it
-                apply()
-            }
-        }
     }
 
     @Suppress("UNCHECKED_CAST")
