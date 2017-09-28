@@ -7,8 +7,8 @@ Usage of this library is simple, create an RxPreferences instance, and use that 
     rxPrefs["key", "default"]
         .subscribe { /* do whatever with your preference */ }
 
-Events are delivered on via an optional schedluer in the RxPreferences constructor (which defaults to Schedulers.io())
+Events are delivered on via an optional scheduler in the RxPreferences constructor (which defaults to Schedulers.io())
 
-RxPreferences also provides actions for updating preferences
+RxPreferences also provides Consumers for updating preferences.
 
-    Observable.just("foo").subscribe(rxPrefs.put("key"))
+    Observable.just("foo").subscribe(rxPrefs["key"])
