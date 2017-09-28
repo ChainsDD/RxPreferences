@@ -20,6 +20,9 @@ class RxPreferences(context: Context,
                     private val scheduler: Scheduler = Schedulers.io()) {
 
     private val prefs = context.getSharedPreferences(name, Context.MODE_PRIVATE)
+
+    // Use a ConnectedObservable here so we automatically subscribe and unsubscribe based on
+    // whether or not anyone is listening
     private val changeObservable by lazy { SharedPreferencesChangeObservable(prefs, scheduler).share() }
 
     /**
